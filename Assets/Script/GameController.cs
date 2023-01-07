@@ -1,11 +1,16 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class GameController
 {
     private List<List<Tile>> _boardTiles;
     private List<int> _tilesTypes;
     private int _tileCount;
+
+    public static event Action updateScore;
+
 
     public List<List<Tile>> StartGame(int boardWidth, int boardHeight)
     {
@@ -68,6 +73,8 @@ public class GameController
                     }
                 }
             }
+
+            updateScore?.Invoke();
 
             // Dropping the tiles
             Dictionary<int, MovedTileInfo> movedTiles = new Dictionary<int, MovedTileInfo>();
@@ -141,7 +148,6 @@ public class GameController
 
         _boardTiles = newBoard;
         return boardSequences;
-        //return _boardTiles;
     }
 
     private static bool HasMatch(List<List<bool>> list)
