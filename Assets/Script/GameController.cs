@@ -225,21 +225,15 @@ public class GameController
             for (int x = 0; x < width; x++)
             {
                 List<int> noMatchTypes = new List<int>(tileTypes.Count);
+                
                 for (int i = 0; i < tileTypes.Count; i++)
                 {
                     noMatchTypes.Add(_tilesTypes[i]);
                 }
 
-                if (x > 1
-                    && board[y][x - 1].type == board[y][x - 2].type)
-                {
-                    noMatchTypes.Remove(board[y][x - 1].type);
-                }
-                if (y > 1
-                    && board[y - 1][x].type == board[y - 2][x].type)
-                {
-                    noMatchTypes.Remove(board[y - 1][x].type);
-                }
+                AvoidHorizontalMatch(noMatchTypes, board, x, y);
+
+                AvoidVerticalMatch(noMatchTypes, board, x, y);
 
                 board[y][x].id = _tileCount++;
                 board[y][x].type = noMatchTypes[Random.Range(0, noMatchTypes.Count)];
@@ -247,5 +241,32 @@ public class GameController
         }
 
         return board;
+    }
+
+    private void AvoidHorizontalMatch(List<int> noMatchTypes, List<List<Tile>> board, int x, int y)
+    {
+        if (x > 1)
+        {
+            var middleTile = board[y][x - 1].type;
+            var leftTile = board[y][x - 2].type;
+            if (middleTile == leftTile)
+            {
+                noMatchTypes.Remove(middleTile);
+            }
+        }
+           
+    }
+
+    private void AvoidVerticalMatch(List<int> noMatchTypes, List<List<Tile>> board, int x, int y)
+    {
+        if (y > 1)
+        {
+            var middleTile = board[y - 1][x].type;
+            var upperTile = board[y - 2][x].type;
+            if (middleTile == upperTile)
+            {
+                noMatchTypes.Remove(middleTile);
+            }
+        }
     }
 }
