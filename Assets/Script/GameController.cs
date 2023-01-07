@@ -169,22 +169,9 @@ public class GameController
         {
             for (int x = 0; x < newBoard[y].Count; x++)
             {
-                if (x > 1
-                    && newBoard[y][x].type == newBoard[y][x - 1].type
-                    && newBoard[y][x - 1].type == newBoard[y][x - 2].type)
-                {
-                    matchedTiles[y][x] = true;
-                    matchedTiles[y][x - 1] = true;
-                    matchedTiles[y][x - 2] = true;
-                }
-                if (y > 1
-                    && newBoard[y][x].type == newBoard[y - 1][x].type
-                    && newBoard[y - 1][x].type == newBoard[y - 2][x].type)
-                {
-                    matchedTiles[y][x] = true;
-                    matchedTiles[y - 1][x] = true;
-                    matchedTiles[y - 2][x] = true;
-                }
+                FindHorizontalMatch(newBoard, matchedTiles, x, y);
+
+                FindVerticalMatch(newBoard, matchedTiles, x, y);
             }
         }
 
@@ -269,4 +256,29 @@ public class GameController
             }
         }
     }
+
+    private static void FindHorizontalMatch(List<List<Tile>> newBoard, List<List<bool>> matchedTiles, int x, int y)
+    {
+        if (x > 1
+                   && newBoard[y][x].type == newBoard[y][x - 1].type
+                   && newBoard[y][x - 1].type == newBoard[y][x - 2].type)
+        {
+            matchedTiles[y][x] = true;
+            matchedTiles[y][x - 1] = true;
+            matchedTiles[y][x - 2] = true;
+        }
+    }
+
+    private static void FindVerticalMatch(List<List<Tile>> newBoard, List<List<bool>> matchedTiles, int x, int y)
+    {
+        if (y > 1
+                      && newBoard[y][x].type == newBoard[y - 1][x].type
+                      && newBoard[y - 1][x].type == newBoard[y - 2][x].type)
+        {
+            matchedTiles[y][x] = true;
+            matchedTiles[y - 1][x] = true;
+            matchedTiles[y - 2][x] = true;
+        }
+    }
+
 }
