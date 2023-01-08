@@ -2,11 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using DG.Tweening;
 
 public class GameHandler : MonoBehaviour
 {
     [SerializeField] private GameController gameController;
+
+    [SerializeField] private TextMeshProUGUI scoreText;
 
     [SerializeField] public int boardWidth = 10;
 
@@ -14,10 +18,14 @@ public class GameHandler : MonoBehaviour
 
     [SerializeField] public BoardView boardView;
 
+    private int score = 0;
+
+
     private void Awake()
     {
         gameController = new GameController();
         boardView.onTileClick += OnTileClick;
+        scoreText.text = "Score: "+ score;
     }
 
     private void Start()
@@ -90,4 +98,21 @@ public class GameHandler : MonoBehaviour
             sequence.onComplete += () => onComplete();
         }
     }
+
+    private void IncreaseScore()
+    {
+        score += 10;
+        scoreText.text = "Score: " + score;
+    }
+
+    private void OnEnable()
+    {
+        GameController.updateScore += IncreaseScore;
+    }
+
+    private void OnDisable()
+    {
+        GameController.updateScore -= IncreaseScore;
+    }
+
 }
