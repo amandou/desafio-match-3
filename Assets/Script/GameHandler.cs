@@ -20,7 +20,6 @@ public class GameHandler : MonoBehaviour
 
     private int score = 0;
 
-
     private void Awake()
     {
         gameController = new GameController();
@@ -40,6 +39,7 @@ public class GameHandler : MonoBehaviour
 
     private void OnTileClick(int x, int y)
     {
+        Debug.Log("Game Handler - OnTileClick");
         if (isAnimating) return;
 
         if (selectedX > -1 && selectedY > -1)
@@ -107,12 +107,12 @@ public class GameHandler : MonoBehaviour
 
     private void OnEnable()
     {
-        GameController.updateScore += IncreaseScore;
+        GameController.onUpdateScore += IncreaseScore;
     }
 
     private void OnDisable()
     {
-        GameController.updateScore -= IncreaseScore;
+        GameController.onUpdateScore -= IncreaseScore;
     }
 
 }
