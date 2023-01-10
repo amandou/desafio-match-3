@@ -39,7 +39,6 @@ public class GameHandler : MonoBehaviour
 
     private void OnTileClick(int x, int y)
     {
-        Debug.Log("Game Handler - OnTileClick");
         if (isAnimating) return;
 
         if (selectedX > -1 && selectedY > -1)
@@ -52,19 +51,23 @@ public class GameHandler : MonoBehaviour
             else
             {
                 isAnimating = true;
+
                 boardView.SwapTiles(selectedX, selectedY, x, y).onComplete += () =>
                 {
                     bool isValid = gameController.IsValidMovement(selectedX, selectedY, x, y);
                     if (!isValid)
                     {
+                        Debug.Log("Não é valido");
                         boardView.SwapTiles(x, y, selectedX, selectedY)
                         .onComplete += () => isAnimating = false;
                     }
                     else
                     {
+                        Debug.Log("Valido");
                         List<BoardSequence> swapResult = gameController.SwapTile(selectedX, selectedY, x, y);
 
                         AnimateBoard(swapResult, 0, () => isAnimating = false);
+
                     }
 
                     selectedX = -1;
