@@ -76,7 +76,6 @@ public class BoardView : MonoBehaviour
         TileView SwapedTile = _tiles[fromY][fromX];
         _tiles[fromY][fromX] = _tiles[toY][toX];
         _tiles[toY][toX] = SwapedTile;
-
         return swapSequence;
     }
 

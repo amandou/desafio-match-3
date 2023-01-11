@@ -24,7 +24,7 @@ public class GameHandler : MonoBehaviour
     {
         gameController = new GameController();
         boardView.onTileClick += OnTileClick;
-        scoreText.text = "Score: "+ score;
+        scoreText.text = "Score \n\n"+ score;
     }
 
     private void Start()
@@ -57,13 +57,11 @@ public class GameHandler : MonoBehaviour
                     bool isValid = gameController.IsValidMovement(selectedX, selectedY, x, y);
                     if (!isValid)
                     {
-                        Debug.Log("Não é valido");
                         boardView.SwapTiles(x, y, selectedX, selectedY)
                         .onComplete += () => isAnimating = false;
                     }
                     else
                     {
-                        Debug.Log("Valido");
                         List<BoardSequence> swapResult = gameController.SwapTile(selectedX, selectedY, x, y);
 
                         AnimateBoard(swapResult, 0, () => isAnimating = false);
@@ -88,6 +86,7 @@ public class GameHandler : MonoBehaviour
 
         BoardSequence boardSequence = boardSequences[i];
         sequence.Append(boardView.DestroyTiles(boardSequence.matchedPosition));
+        sequence.Append(boardView.CreateTile(boardSequence.newSpecialTiles));
         sequence.Append(boardView.MoveTiles(boardSequence.movedTiles));
         sequence.Append(boardView.CreateTile(boardSequence.addedTiles));
 
@@ -105,7 +104,7 @@ public class GameHandler : MonoBehaviour
     private void IncreaseScore()
     {
         score += 10;
-        scoreText.text = "Score: " + score;
+        scoreText.text = "Score \n\n" + score;
     }
 
     private void OnEnable()
