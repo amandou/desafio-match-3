@@ -67,6 +67,8 @@ public class GameController
         int i = 0;
         Debug.Log("result "+ HasMatch(matchedTileList));
         bool hasMatches;
+        CleanLinesIfPossible(fromX,  fromY,  toX, toY, newBoard, matchedTiles);
+        CleanColunmsIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
 
         do
         {
@@ -100,6 +102,30 @@ public class GameController
         _boardTiles = newBoard;
         return boardSequences;
     }
+    private void CleanLinesIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    {
+        if (newBoard[fromY][fromX].type == (int)TileTypes.LineBreaker)
+        {
+            CleanLine(fromY, matchedTiles);
+        }
+        else if (newBoard[toY][toX].type == (int)TileTypes.LineBreaker)
+        {
+            CleanLine(toY, matchedTiles);
+        }
+    }
+
+    private void CleanColunmsIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    {
+        if (newBoard[fromY][fromX].type == (int)TileTypes.ColumnBreaker)
+        {
+            CleanColunm(fromY-1, matchedTiles);
+        }
+        else if (newBoard[toY][toX].type == (int)TileTypes.ColumnBreaker)
+        {
+            CleanColunm(toY-1, matchedTiles);
+        }
+    }
+
 
     private List<List<int>> CreateMatchedTiles(List<List<Tile>> newBoard)
     {
@@ -116,17 +142,17 @@ public class GameController
         return matchedTiles;
     }
 
-    private static void CleanLine(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int y)
+    private static void CleanLine(int y, List<List<int>> matchedTiles)
     {
-        for (int i = 0; i < newBoard[y].Count; i++)
-        {
+        for (int i = 0; i < matchedTiles[y].Count; i++)
+        { 
             matchedTiles[y][i] = 1;
         }
     }
 
-    private static void CleanColunm(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int x)
+    private static void CleanColunm(int x, List<List<int>> matchedTiles)
     {
-        for (int i = 0; i < newBoard[x].Count; i++)
+        for (int i = 0; i < matchedTiles[x].Count; i++)
         {
             matchedTiles[i][x] = 1;
         }
@@ -167,7 +193,7 @@ public class GameController
                 newBoard[y][x - 1].type == newBoard[y][x - 2].type &&
                 newBoard[y][x - 2].type == newBoard[y][x - 3].type)
             {
-                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.Purple);
+                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.LineBreaker);
                 VerifyValidTile(newBoard, matchedTiles, x-1, y, 1);
                 VerifyValidTile(newBoard, matchedTiles, x-2, y, 1);
                 VerifyValidTile(newBoard, matchedTiles, x-3, y, 1);
@@ -198,7 +224,7 @@ public class GameController
                 newBoard[y - 1][x].type == newBoard[y - 2][x].type &&
                 newBoard[y - 2][x].type == newBoard[y - 3][x].type)
             {
-                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.Purple);
+                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.ColumnBreaker);
                 VerifyValidTile(newBoard, matchedTiles, x, y - 1, 1);
                 VerifyValidTile(newBoard, matchedTiles, x, y - 2, 1);
                 VerifyValidTile(newBoard, matchedTiles, x, y - 3, 1);
@@ -338,33 +364,11 @@ public class GameController
         }
         return matchedPosition;
     }
-    private static int Compare(Vector2Int a, Vector2Int b)
-    {
-        if (a.y == b.y)
-        {
-            if (a.x == b.x)
-            {
-                return 0;
-            }
-            if (a.x > b.x)
-            {
-                return -1;
-            }
-            return 1;
-        }
-        else
-        {
-            if (a.y > b.y)
-            {
-                return -1;
-            }
-            return 1;
-        }
-    }
+
     private void DroppingTiles(List<List<Tile>> newBoard, List<Vector2Int> matchedPosition, Dictionary<int, MovedTileInfo> movedTiles, List<MovedTileInfo> movedTilesList)
     {
         Debug.Log("DroppingTiles");
-        //matchedPosition.Sort(Compare);
+
         for (int i = 0; i < matchedPosition.Count; i++)
         {
             int x = matchedPosition[i].x;
