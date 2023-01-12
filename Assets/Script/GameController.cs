@@ -62,13 +62,10 @@ public class GameController
         List<BoardSequence> boardSequences = new List<BoardSequence>();
         List<List<int>> matchedTiles = CreateMatchedTiles(newBoard);
 
-        List<List<int>> matchedTileList = FindMatches(newBoard, matchedTiles);
-
-        int i = 0;
-        Debug.Log("result "+ HasMatch(matchedTileList));
         bool hasMatches;
         CleanLinesIfPossible(fromX,  fromY,  toX, toY, newBoard, matchedTiles);
         CleanColunmsIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
+        ExplodeIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
 
         do
         {
@@ -79,13 +76,8 @@ public class GameController
             onUpdateScore?.Invoke();
 
             var matchedPosition = CleanMatchedTiles(newBoard, matchedTiles, specialTilesAdded);
-
-            Dictionary<int, MovedTileInfo> movedTiles = new Dictionary<int, MovedTileInfo>();
-            List<MovedTileInfo> movedTilesList = new List<MovedTileInfo>();
-            DroppingTiles(newBoard, matchedPosition, movedTiles, movedTilesList);
-
-            List<AddedTileInfo> addedTiles = new List<AddedTileInfo>();
-            FillBoard(newBoard, addedTiles);
+            var movedTilesList = DroppingTiles(newBoard, matchedPosition);
+            var addedTiles = FillBoard(newBoard);
 
             BoardSequence sequence = new BoardSequence
             {
@@ -118,11 +110,41 @@ public class GameController
     {
         if (newBoard[fromY][fromX].type == (int)TileTypes.ColumnBreaker)
         {
-            CleanColunm(fromY-1, matchedTiles);
+            CleanColunm(fromX, matchedTiles);
         }
         else if (newBoard[toY][toX].type == (int)TileTypes.ColumnBreaker)
         {
-            CleanColunm(toY-1, matchedTiles);
+            CleanColunm(toX, matchedTiles);
+        }
+    }
+
+    private void ExplodeIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    {
+        if (newBoard[fromY][fromX].type == (int)TileTypes.Bomb)
+        {
+            Explode(fromX, fromY, matchedTiles);
+        }
+        else if (newBoard[toY][toX].type == (int)TileTypes.Bomb)
+        {
+            Explode(toX, toY, matchedTiles);
+        }
+    }
+
+    private static void Explode(int bombX, int bombY, List<List<int>> matchedTiles)
+    {
+        var radius = 3;
+        var minY = Mathf.Max(0, bombY - radius);
+        var minX = Mathf.Max(0, bombX - radius);
+        var maxY = Mathf.Min(matchedTiles.Count, bombY + radius);
+        var maxX = Mathf.Min(matchedTiles[bombY].Count, bombX + radius);
+        
+        for (int y = minY; y < maxY; y++)
+        {
+            for (int x = minX; x < maxX; x++)
+            {
+                if ((Mathf.Pow(y - bombY, 2) + Mathf.Pow(x - bombX, 2)) > Mathf.Pow(radius, 2)) continue;
+                matchedTiles[y][x] = 1;
+            }
         }
     }
 
@@ -185,8 +207,25 @@ public class GameController
 
         return matchedTiles;
     }
+
     private static void FindHorizontalMatch(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int x, int y)
     {
+        if (x > 3)
+        {
+            if (newBoard[y][x].type == newBoard[y][x - 1].type &&
+                newBoard[y][x - 1].type == newBoard[y][x - 2].type &&
+                newBoard[y][x - 2].type == newBoard[y][x - 3].type &&
+                newBoard[y][x - 3].type == newBoard[y][x - 4].type)
+            {
+                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.Bomb);
+                VerifyValidTile(newBoard, matchedTiles, x - 1, y, 1);
+                VerifyValidTile(newBoard, matchedTiles, x - 2, y, 1);
+                VerifyValidTile(newBoard, matchedTiles, x - 3, y, 1);
+                VerifyValidTile(newBoard, matchedTiles, x - 4, y, 1);
+                return;
+            }
+        }
+
         if (x > 2)
         {
             if (newBoard[y][x].type == newBoard[y][x - 1].type &&
@@ -218,6 +257,22 @@ public class GameController
 
     private static void FindVerticalMatch(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int x, int y)
     {
+        if (y > 3)
+        {
+            if (newBoard[y][x].type == newBoard[y - 1][x].type &&
+                newBoard[y - 1][x].type == newBoard[y - 2][x].type &&
+                newBoard[y - 2][x].type == newBoard[y - 3][x].type &&
+                newBoard[y - 3][x].type == newBoard[y - 4][x].type)
+            {
+                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.Bomb);
+                VerifyValidTile(newBoard, matchedTiles, x, y - 1, 1);
+                VerifyValidTile(newBoard, matchedTiles, x, y - 2, 1);
+                VerifyValidTile(newBoard, matchedTiles, x, y - 3, 1);
+                VerifyValidTile(newBoard, matchedTiles, x, y - 4, 1);
+                return;
+            }
+        }
+
         if (y > 2)
         {
             if (newBoard[y][x].type == newBoard[y - 1][x].type &&
@@ -365,9 +420,11 @@ public class GameController
         return matchedPosition;
     }
 
-    private void DroppingTiles(List<List<Tile>> newBoard, List<Vector2Int> matchedPosition, Dictionary<int, MovedTileInfo> movedTiles, List<MovedTileInfo> movedTilesList)
+    private List<MovedTileInfo> DroppingTiles(List<List<Tile>> newBoard, List<Vector2Int> matchedPosition)
     {
         Debug.Log("DroppingTiles");
+        Dictionary<int, MovedTileInfo> movedTiles = new Dictionary<int, MovedTileInfo>();
+        List<MovedTileInfo> movedTilesList = new List<MovedTileInfo>();
 
         for (int i = 0; i < matchedPosition.Count; i++)
         {
@@ -408,11 +465,15 @@ public class GameController
                 };
             }
         }
+        return movedTilesList;
     }
 
-    private void FillBoard(List<List<Tile>> newBoard, List<AddedTileInfo> addedTiles)
+    private List<AddedTileInfo> FillBoard(List<List<Tile>> newBoard)
     {
         Debug.Log("FillBoard");
+
+        List<AddedTileInfo> addedTiles = new List<AddedTileInfo>();
+        
         for (int y = newBoard.Count - 1; y > -1; y--)
         {
             for (int x = newBoard[y].Count - 1; x > -1; x--)
@@ -436,6 +497,7 @@ public class GameController
                 }
             }
         }
+        return addedTiles;
     }
 
 }
