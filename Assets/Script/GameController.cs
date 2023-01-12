@@ -11,7 +11,6 @@ public class GameController
     
     public static event Action onUpdateScore;
 
-
     public List<List<Tile>> StartGame(int boardWidth, int boardHeight)
     {
         _tilesTypes = new List<int> { (int)TileTypes.Yellow, (int)TileTypes.Blue, (int)TileTypes.Green, (int)TileTypes.Orange };
@@ -69,7 +68,7 @@ public class GameController
 
         do
         {
-            hasMatches = HasMatch(FindMatches(newBoard, matchedTiles));
+            hasMatches = FindMatches(newBoard, matchedTiles);
             if (!hasMatches) continue;
 
             var specialTilesAdded = new List<AddedTileInfo>();
@@ -148,7 +147,6 @@ public class GameController
         }
     }
 
-
     private List<List<int>> CreateMatchedTiles(List<List<Tile>> newBoard)
     {
         Debug.Log("CreateMatchedTiles");
@@ -180,132 +178,157 @@ public class GameController
         }
     }
 
-    private static bool HasMatch(List<List<int>> list)
-    {
-        Debug.Log("Has Match");
-        for (int y = 0; y < list.Count; y++)
-            for (int x = 0; x < list[y].Count; x++)
-                if (list[y][x] != 0)
-                    return true;
-        return false;
-    }
-
-    private static List<List<int>> FindMatches(List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    private static bool FindMatches(List<List<Tile>> newBoard, List<List<int>> matchedTiles)
     {
         Debug.Log("Find Matches");
+        bool hasMatches = false;
         int rows = newBoard.Count;
+
         for (int y = 0; y < rows; y++)
         {
-            int colums = newBoard[y].Count;
-            for (int x = 0; x < colums; x++)
+            int columns = newBoard[y].Count;
+            for (int x = 0; x < columns; x++)
             {
-                FindHorizontalMatch(newBoard, matchedTiles, x, y);
-
-                FindVerticalMatch(newBoard, matchedTiles, x, y);
+                if (CheckNeighbors(newBoard, x, y, columns, rows, matchedTiles))
+                {
+                    hasMatches = true;
+                }
             }
         }
 
-        return matchedTiles;
+        return hasMatches;
     }
 
-    private static void FindHorizontalMatch(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int x, int y)
+    private static bool CheckNeighbors(List<List<Tile>> newBoard, int x, int y, 
+        int columns, int rows, List<List<int>> matchedTiles)
     {
-        if (x > 3)
-        {
-            if (newBoard[y][x].type == newBoard[y][x - 1].type &&
-                newBoard[y][x - 1].type == newBoard[y][x - 2].type &&
-                newBoard[y][x - 2].type == newBoard[y][x - 3].type &&
-                newBoard[y][x - 3].type == newBoard[y][x - 4].type)
-            {
-                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.Bomb);
-                VerifyValidTile(newBoard, matchedTiles, x - 1, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x - 2, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x - 3, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x - 4, y, 1);
-                return;
-            }
-        }
+        var currentType = newBoard[y][x].type;
+        
+        int matchCounter = FindHorizontalMatches(newBoard, x, y, columns, currentType);
+        bool haHorizontalsMatches = SelectHorizontalMatches(matchedTiles, matchCounter, x, y);
+        
+        matchCounter = FindVerticalMatches(newBoard, x, y, columns, currentType);
+        bool hasVericalMatches = SelectVerticalMatches(matchedTiles, matchCounter, x, y);
 
-        if (x > 2)
-        {
-            if (newBoard[y][x].type == newBoard[y][x - 1].type &&
-                newBoard[y][x - 1].type == newBoard[y][x - 2].type &&
-                newBoard[y][x - 2].type == newBoard[y][x - 3].type)
-            {
-                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.LineBreaker);
-                VerifyValidTile(newBoard, matchedTiles, x-1, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x-2, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x-3, y, 1);
-                return;
-            }
-        }
+        var hasMatches = haHorizontalsMatches || hasVericalMatches;
 
-        if (x > 1)
-        {
-
-            if (newBoard[y][x].type == newBoard[y][x - 1].type
-                && newBoard[y][x - 1].type == newBoard[y][x - 2].type)
-            {
-                VerifyValidTile(newBoard, matchedTiles, x , y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x - 1, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x - 2, y, 1);
-                return;
-                
-            }
-        }
+        return hasMatches;
     }
 
-    private static void FindVerticalMatch(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int x, int y)
+    private static int FindHorizontalMatches(List<List<Tile>> newBoard, int x, int y, int numberOfColumns, int currentType)
     {
-        if (y > 3)
-        {
-            if (newBoard[y][x].type == newBoard[y - 1][x].type &&
-                newBoard[y - 1][x].type == newBoard[y - 2][x].type &&
-                newBoard[y - 2][x].type == newBoard[y - 3][x].type &&
-                newBoard[y - 3][x].type == newBoard[y - 4][x].type)
-            {
-                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.Bomb);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 1, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 2, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 3, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 4, 1);
-                return;
-            }
-        }
+        bool isSameType = true;
+        int currentColumn = x + 1;
+        int matchCounter = 1;
 
-        if (y > 2)
+        while (isSameType && (currentColumn < numberOfColumns))
         {
-            if (newBoard[y][x].type == newBoard[y - 1][x].type &&
-                newBoard[y - 1][x].type == newBoard[y - 2][x].type &&
-                newBoard[y - 2][x].type == newBoard[y - 3][x].type)
+            if (newBoard[y][currentColumn++].type != currentType)
             {
-                VerifyValidTile(newBoard, matchedTiles, x, y, -(int)TileTypes.ColumnBreaker);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 1, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 2, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 3, 1);
-                return;
+                isSameType = false;
+            }
+            else
+            {
+                matchCounter++;
             }
         }
-
-        if (y > 1)
-        {
-            if (newBoard[y][x].type == newBoard[y - 1][x].type &&
-                newBoard[y - 1][x].type == newBoard[y - 2][x].type)
-            {
-                VerifyValidTile(newBoard, matchedTiles, x, y, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 1, 1);
-                VerifyValidTile(newBoard, matchedTiles, x, y - 2, 1);
-                return;
-            }
-        }
+        return matchCounter;
     }
 
-    private static void VerifyValidTile(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int x, int y, int value)
+    private static int FindVerticalMatches(List<List<Tile>> newBoard, int x, int y, int numberOfRows, int currentType)
     {
-        if (matchedTiles[y][x] > -1)
+        bool isSameType = true;
+        int currentRow = y + 1;
+        int matchCounter = 1;
+
+        while (isSameType && (currentRow < numberOfRows))
+        {
+            if (newBoard[currentRow++][x].type != currentType)
+            {
+                isSameType = false;
+            }
+            else
+            {
+                matchCounter++;
+            }
+        }
+        return matchCounter;
+    }
+
+    private static void VerifyValidTile(List<List<int>> matchedTiles, int x, int y, int value)
+    {
+        if (matchedTiles[y][x] == 0)
         {
             matchedTiles[y][x] = value;
         }
+    }
+
+    private static bool SelectHorizontalMatches(List<List<int>> matchedTiles, int matchCounter, int x, int y)
+    {
+        var hasMatches = false;
+
+        if (matchCounter > 2)
+        {
+            hasMatches = true;
+            if (matchCounter == 5)
+            {
+                Debug.Log("Adding Bomb Horizontal Match");
+                --matchCounter;
+                if (matchedTiles[y][x + matchCounter] > -1)
+                {
+                    matchedTiles[y][x + matchCounter] = -(int)TileTypes.Bomb;
+                }
+            }
+            else if (matchCounter == 4)
+            {
+                Debug.Log("Adding LineBreaker Horizontal Match");
+                --matchCounter;
+                if (matchedTiles[y][x + matchCounter] > -1)
+                {
+                    matchedTiles[y][x + matchCounter] = -(int)TileTypes.LineBreaker;
+                }
+            }
+            while (matchCounter > 0)
+            {
+                --matchCounter;
+                VerifyValidTile(matchedTiles, x + matchCounter, y, 1);
+            }
+        }
+
+        return hasMatches;
+    }
+    private static bool SelectVerticalMatches(List<List<int>> matchedTiles, int matchCounter, int x, int y)
+    {
+        var hasMatches = false;
+
+        if (matchCounter > 2)
+        {
+            hasMatches = true;
+            if (matchCounter == 5)
+            {
+                Debug.Log("Adding Bomb Vertical Match");
+                --matchCounter;
+                if (matchedTiles[y + matchCounter][x] > -1)
+                {
+                    matchedTiles[y + matchCounter][x] = -(int)TileTypes.Bomb;
+                }
+            }
+            else if (matchCounter == 4)
+            {
+                Debug.Log("Adding ColumnBreaker Vertical Match");
+                --matchCounter;
+                if (matchedTiles[y + matchCounter][x] > -1)
+                {
+                    matchedTiles[y + matchCounter][x] = -(int)TileTypes.ColumnBreaker;
+                }
+            }
+            while (matchCounter > 0)
+            {
+                --matchCounter;
+                VerifyValidTile(matchedTiles, x, y + matchCounter, 1);
+            }
+        }
+        return hasMatches;
     }
 
     private static List<List<Tile>> CopyBoard(List<List<Tile>> boardToCopy)
