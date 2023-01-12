@@ -20,12 +20,11 @@ public class GameHandler : MonoBehaviour
 
     private int score = 0;
 
-
     private void Awake()
     {
         gameController = new GameController();
         boardView.onTileClick += OnTileClick;
-        scoreText.text = "Score: "+ score;
+        scoreText.text = "Score \n\n"+ score;
     }
 
     private void Start()
@@ -52,6 +51,7 @@ public class GameHandler : MonoBehaviour
             else
             {
                 isAnimating = true;
+
                 boardView.SwapTiles(selectedX, selectedY, x, y).onComplete += () =>
                 {
                     bool isValid = gameController.IsValidMovement(selectedX, selectedY, x, y);
@@ -65,6 +65,7 @@ public class GameHandler : MonoBehaviour
                         List<BoardSequence> swapResult = gameController.SwapTile(selectedX, selectedY, x, y);
 
                         AnimateBoard(swapResult, 0, () => isAnimating = false);
+
                     }
 
                     selectedX = -1;
@@ -85,6 +86,7 @@ public class GameHandler : MonoBehaviour
 
         BoardSequence boardSequence = boardSequences[i];
         sequence.Append(boardView.DestroyTiles(boardSequence.matchedPosition));
+        sequence.Append(boardView.CreateTile(boardSequence.newSpecialTiles));
         sequence.Append(boardView.MoveTiles(boardSequence.movedTiles));
         sequence.Append(boardView.CreateTile(boardSequence.addedTiles));
 
@@ -102,17 +104,17 @@ public class GameHandler : MonoBehaviour
     private void IncreaseScore()
     {
         score += 10;
-        scoreText.text = "Score: " + score;
+        scoreText.text = "Score \n\n" + score;
     }
 
     private void OnEnable()
     {
-        GameController.updateScore += IncreaseScore;
+        GameController.onUpdateScore += IncreaseScore;
     }
 
     private void OnDisable()
     {
-        GameController.updateScore -= IncreaseScore;
+        GameController.onUpdateScore -= IncreaseScore;
     }
 
 }
