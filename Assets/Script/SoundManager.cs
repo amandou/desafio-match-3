@@ -21,12 +21,10 @@ public class SoundManager : MonoBehaviour
     private void OnEnable()
     {
         GameHandler.onPlaySound += PlaySound;
-        GameController.onPlaySound += PlaySound;
     }
 
     private void OnDisable()
     {
         GameHandler.onPlaySound -= PlaySound;
-        GameController.onPlaySound -= PlaySound;
     }
 }

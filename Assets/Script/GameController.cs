@@ -137,15 +137,15 @@ public class GameController
     {
         if (newBoard[fromY][fromX].type == (int)TileTypes.Bomb)
         {
-            Explode(fromX, fromY, matchedTiles);
+            Explode(matchedTiles, fromX, fromY);
         }
         else if (newBoard[toY][toX].type == (int)TileTypes.Bomb)
         {
-            Explode(toX, toY, matchedTiles);
+            Explode(matchedTiles, toX, toY);
         }
     }
 
-    private static void Explode(int bombX, int bombY, List<List<int>> matchedTiles)
+    private static void Explode(List<List<int>> matchedTiles, int bombX, int bombY)
     {
         var radius = 3;
         var minY = Mathf.Max(0, bombY - radius);
@@ -336,6 +336,7 @@ public class GameController
 
         return hasMatches;
     }
+
     private static bool SelectVerticalMatches(List<List<int>> matchedTiles, int matchCounter, int x, int y)
     {
         var hasMatches = false;
