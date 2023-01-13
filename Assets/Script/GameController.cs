@@ -65,6 +65,7 @@ public class GameController
         CleanLinesIfPossible(fromX,  fromY,  toX, toY, newBoard, matchedTiles);
         CleanColunmsIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
         ExplodeIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
+        DestroyColorIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
 
         do
         {
@@ -93,6 +94,21 @@ public class GameController
         _boardTiles = newBoard;
         return boardSequences;
     }
+
+    private void DestroyColorIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    {
+        if (newBoard[fromY][fromX].type == (int)TileTypes.ColorDestroyer)
+        {
+            int matchedTileType = newBoard[toY][toX].type;
+            DestroyColors(newBoard, matchedTiles, matchedTileType);
+        }
+        else if (newBoard[toY][toX].type == (int)TileTypes.ColorDestroyer)
+        {
+            int matchedTileType = newBoard[fromY][fromX].type;
+            DestroyColors(newBoard, matchedTiles, matchedTileType);
+        }
+    }
+
     private void CleanLinesIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
     {
         if (newBoard[fromY][fromX].type == (int)TileTypes.LineBreaker)
@@ -143,6 +159,20 @@ public class GameController
             {
                 if ((Mathf.Pow(y - bombY, 2) + Mathf.Pow(x - bombX, 2)) > Mathf.Pow(radius, 2)) continue;
                 matchedTiles[y][x] = 1;
+            }
+        }
+    }
+
+    private static void DestroyColors(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int matchedTileType)
+    {
+        int rows = newBoard.Count;
+        for (int y = 0; y < rows; y++)
+        {
+            int columns = newBoard[y].Count;
+            for (int x = 0; x < columns; x++)
+            {
+                if (matchedTileType == newBoard[y][x].type)
+                    matchedTiles[y][x] = 1;
             }
         }
     }
@@ -270,6 +300,15 @@ public class GameController
         if (matchCounter > 2)
         {
             hasMatches = true;
+            if (matchCounter == 6)
+            {
+                Debug.Log("Adding Color Destroyer Horizontal Match");
+                --matchCounter;
+                if (matchedTiles[y][x + matchCounter] > -1)
+                {
+                    matchedTiles[y][x + matchCounter] = -(int)TileTypes.ColorDestroyer;
+                }
+            }
             if (matchCounter == 5)
             {
                 Debug.Log("Adding Bomb Horizontal Match");
@@ -304,6 +343,15 @@ public class GameController
         if (matchCounter > 2)
         {
             hasMatches = true;
+            if (matchCounter == 6)
+            {
+                Debug.Log("Adding Bomb Vertical Match");
+                --matchCounter;
+                if (matchedTiles[y + matchCounter][x] > -1)
+                {
+                    matchedTiles[y + matchCounter][x] = -(int)TileTypes.ColorDestroyer;
+                }
+            }
             if (matchCounter == 5)
             {
                 Debug.Log("Adding Bomb Vertical Match");
