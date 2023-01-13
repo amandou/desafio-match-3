@@ -8,6 +8,7 @@ using DG.Tweening;
 
 public class GameHandler : MonoBehaviour
 {
+        
     [SerializeField] private GameController gameController;
 
     [SerializeField] private TextMeshProUGUI scoreText;
@@ -17,6 +18,9 @@ public class GameHandler : MonoBehaviour
     [SerializeField] public int boardHeight = 10;
 
     [SerializeField] public BoardView boardView;
+
+    [SerializeField] private AudioClip swapSound;
+    public static event Action<AudioClip> onPlaySound;
 
     private int score = 0;
 
@@ -51,10 +55,11 @@ public class GameHandler : MonoBehaviour
             else
             {
                 isAnimating = true;
-
+                onPlaySound?.Invoke(swapSound);
                 boardView.SwapTiles(selectedX, selectedY, x, y).onComplete += () =>
                 {
                     bool isValid = gameController.IsValidMovement(selectedX, selectedY, x, y);
+                   
                     if (!isValid)
                     {
                         boardView.SwapTiles(x, y, selectedX, selectedY)
@@ -67,7 +72,6 @@ public class GameHandler : MonoBehaviour
                         AnimateBoard(swapResult, 0, () => isAnimating = false);
 
                     }
-
                     selectedX = -1;
                     selectedY = -1;
                 };
