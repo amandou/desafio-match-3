@@ -54,18 +54,21 @@ public class GameController
         Debug.Log("SwapTile");
         List<List<Tile>> newBoard = CopyBoard(_boardTiles);
 
-        Tile switchedTile = newBoard[fromY][fromX];
-        newBoard[fromY][fromX] = newBoard[toY][toX];
-        newBoard[toY][toX] = switchedTile;
+        Vector2Int from = new Vector2Int(fromX, fromY);
+        Vector2Int to = new Vector2Int(toX, toY);
+
+        Tile switchedTile = newBoard[from.y][from.x];
+        newBoard[from.y][from.x] = newBoard[to.y][to.x];
+        newBoard[to.y][to.x] = switchedTile;
 
         List<BoardSequence> boardSequences = new List<BoardSequence>();
         List<List<int>> matchedTiles = CreateMatchedTiles(newBoard);
 
         bool hasMatches;
-        CleanLinesIfPossible(fromX,  fromY,  toX, toY, newBoard, matchedTiles);
-        CleanColunmsIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
-        ExplodeIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
-        DestroyColorIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
+        CleanLinesIfPossible(from, to, newBoard, matchedTiles);
+        CleanColunmsIfPossible(from, to, newBoard, matchedTiles);
+        ExplodeIfPossible(from, to, newBoard, matchedTiles);
+        DestroyColorIfPossible(from, to, newBoard, matchedTiles);
 
         do
         {
@@ -208,53 +211,53 @@ public class GameController
         return addedTiles;
     }
 
-    private void DestroyColorIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    private void DestroyColorIfPossible(Vector2Int from, Vector2Int to, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
     {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.ColorDestroyer)
+        if (newBoard[from.y][from.x].type == (int)TileTypes.ColorDestroyer)
         {
-            int matchedTileType = newBoard[toY][toX].type;
+            int matchedTileType = newBoard[to.y][to.x].type;
             DestroyColors(newBoard, matchedTiles, matchedTileType);
         }
-        else if (newBoard[toY][toX].type == (int)TileTypes.ColorDestroyer)
+        else if (newBoard[to.y][to.x].type == (int)TileTypes.ColorDestroyer)
         {
-            int matchedTileType = newBoard[fromY][fromX].type;
+            int matchedTileType = newBoard[from.y][from.x].type;
             DestroyColors(newBoard, matchedTiles, matchedTileType);
         }
     }
 
-    private void CleanLinesIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    private void CleanLinesIfPossible(Vector2Int from, Vector2Int to, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
     {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.LineBreaker)
+        if (newBoard[from.y][from.x].type == (int)TileTypes.LineBreaker)
         {
-            CleanLine(fromY, matchedTiles);
+            CleanLine(from.y, matchedTiles);
         }
-        else if (newBoard[toY][toX].type == (int)TileTypes.LineBreaker)
+        else if (newBoard[to.y][to.x].type == (int)TileTypes.LineBreaker)
         {
-            CleanLine(toY, matchedTiles);
+            CleanLine(to.y, matchedTiles);
         }
     }
 
-    private void CleanColunmsIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    private void CleanColunmsIfPossible(Vector2Int from, Vector2Int to, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
     {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.ColumnBreaker)
+        if (newBoard[from.y][from.x].type == (int)TileTypes.ColumnBreaker)
         {
-            CleanColunm(fromX, matchedTiles);
+            CleanColunm(from.x, matchedTiles);
         }
-        else if (newBoard[toY][toX].type == (int)TileTypes.ColumnBreaker)
+        else if (newBoard[to.y][to.x].type == (int)TileTypes.ColumnBreaker)
         {
-            CleanColunm(toX, matchedTiles);
+            CleanColunm(to.x, matchedTiles);
         }
     }
 
-    private void ExplodeIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    private void ExplodeIfPossible(Vector2Int from, Vector2Int to, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
     {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.Bomb)
+        if (newBoard[from.y][from.x].type == (int)TileTypes.Bomb)
         {
-            Explode(matchedTiles, fromX, fromY);
+            Explode(matchedTiles, from.x, from.y);
         }
-        else if (newBoard[toY][toX].type == (int)TileTypes.Bomb)
+        else if (newBoard[to.y][to.x].type == (int)TileTypes.Bomb)
         {
-            Explode(matchedTiles, toX, toY);
+            Explode(matchedTiles, to.x, to.y);
         }
     }
 
