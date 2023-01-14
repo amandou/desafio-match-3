@@ -65,10 +65,8 @@ public class GameController
         List<List<int>> matchedTiles = CreateMatchedTiles(newBoard);
 
         bool hasMatches;
-        CleanLinesIfPossible(from, to, newBoard, matchedTiles);
-        CleanColunmsIfPossible(from, to, newBoard, matchedTiles);
-        ExplodeIfPossible(from, to, newBoard, matchedTiles);
-        DestroyColorIfPossible(from, to, newBoard, matchedTiles);
+
+        ValidateSpecialTilesMaches(from, to, newBoard, matchedTiles);
 
         do
         {
@@ -181,6 +179,7 @@ public class GameController
 
     private List<AddedTileInfo> FillBoard(List<List<Tile>> newBoard)
     {
+
         Debug.Log("FillBoard");
 
         List<AddedTileInfo> addedTiles = new List<AddedTileInfo>();
@@ -209,6 +208,14 @@ public class GameController
             }
         }
         return addedTiles;
+    }
+
+    private void ValidateSpecialTilesMaches(Vector2Int from, Vector2Int to, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    {
+        CleanLinesIfPossible(from, to, newBoard, matchedTiles);
+        CleanColunmsIfPossible(from, to, newBoard, matchedTiles);
+        ExplodeIfPossible(from, to, newBoard, matchedTiles);
+        DestroyColorIfPossible(from, to, newBoard, matchedTiles);
     }
 
     private void DestroyColorIfPossible(Vector2Int from, Vector2Int to, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
