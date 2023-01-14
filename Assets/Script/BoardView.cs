@@ -84,7 +84,7 @@ public class BoardView : MonoBehaviour
         for (int i = 0; i < matchedPosition.Count; i++)
         {
             Vector2Int position = matchedPosition[i];
-            Destroy(_tiles[position.y][position.x].gameObject);
+            _tiles[position.y][position.x].Destroy();
             _tiles[position.y][position.x] = null;
         }
         return DOVirtual.DelayedCall(0.2f, () => { });
