@@ -18,13 +18,13 @@ public class GameController
         return _boardTiles;
     }
 
-    public bool IsValidMovement(int fromX, int fromY, int toX, int toY)
+    public bool IsValidMovement(Vector2Int from, Vector2Int to)
     {
         List<List<Tile>> newBoard = CopyBoard(_boardTiles);
 
-        Tile switchedTile = newBoard[fromY][fromX];
-        newBoard[fromY][fromX] = newBoard[toY][toX];
-        newBoard[toY][toX] = switchedTile;
+        Tile switchedTile = newBoard[from.y][from.x];
+        newBoard[from.y][from.x] = newBoard[to.y][to.x];
+        newBoard[to.y][to.x] = switchedTile;
 
         for (int y = 0; y < newBoard.Count; y++)
         {
@@ -54,18 +54,19 @@ public class GameController
         Debug.Log("SwapTile");
         List<List<Tile>> newBoard = CopyBoard(_boardTiles);
 
-        Tile switchedTile = newBoard[fromY][fromX];
-        newBoard[fromY][fromX] = newBoard[toY][toX];
-        newBoard[toY][toX] = switchedTile;
+        Vector2Int from = new Vector2Int(fromX, fromY);
+        Vector2Int to = new Vector2Int(toX, toY);
+
+        Tile switchedTile = newBoard[from.y][from.x];
+        newBoard[from.y][from.x] = newBoard[to.y][to.x];
+        newBoard[to.y][to.x] = switchedTile;
 
         List<BoardSequence> boardSequences = new List<BoardSequence>();
         List<List<int>> matchedTiles = CreateMatchedTiles(newBoard);
 
         bool hasMatches;
-        CleanLinesIfPossible(fromX,  fromY,  toX, toY, newBoard, matchedTiles);
-        CleanColunmsIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
-        ExplodeIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
-        DestroyColorIfPossible(fromX, fromY, toX, toY, newBoard, matchedTiles);
+
+        SpecialTiles.ValidateSpecialTilesMaches(from, to, newBoard, matchedTiles);
 
         do
         {
@@ -95,88 +96,123 @@ public class GameController
         return boardSequences;
     }
 
-    private void DestroyColorIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
+    private List<Vector2Int> CleanMatchedTiles(List<List<Tile>> newBoard, List<List<int>> matchedTiles, List<AddedTileInfo> newSpecialTiles)
     {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.ColorDestroyer)
-        {
-            int matchedTileType = newBoard[toY][toX].type;
-            DestroyColors(newBoard, matchedTiles, matchedTileType);
-        }
-        else if (newBoard[toY][toX].type == (int)TileTypes.ColorDestroyer)
-        {
-            int matchedTileType = newBoard[fromY][fromX].type;
-            DestroyColors(newBoard, matchedTiles, matchedTileType);
-        }
-    }
+        Debug.Log("CleanMatchedTiles");
 
-    private void CleanLinesIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
-    {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.LineBreaker)
-        {
-            CleanLine(fromY, matchedTiles);
-        }
-        else if (newBoard[toY][toX].type == (int)TileTypes.LineBreaker)
-        {
-            CleanLine(toY, matchedTiles);
-        }
-    }
+        List<Vector2Int> matchedPosition = new List<Vector2Int>();
 
-    private void CleanColunmsIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
-    {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.ColumnBreaker)
+        for (int y = 0; y < newBoard.Count; y++)
         {
-            CleanColunm(fromX, matchedTiles);
-        }
-        else if (newBoard[toY][toX].type == (int)TileTypes.ColumnBreaker)
-        {
-            CleanColunm(toX, matchedTiles);
-        }
-    }
-
-    private void ExplodeIfPossible(int fromX, int fromY, int toX, int toY, List<List<Tile>> newBoard, List<List<int>> matchedTiles)
-    {
-        if (newBoard[fromY][fromX].type == (int)TileTypes.Bomb)
-        {
-            Explode(matchedTiles, fromX, fromY);
-        }
-        else if (newBoard[toY][toX].type == (int)TileTypes.Bomb)
-        {
-            Explode(matchedTiles, toX, toY);
-        }
-    }
-
-    private static void Explode(List<List<int>> matchedTiles, int bombX, int bombY)
-    {
-        var radius = 3;
-        var minY = Mathf.Max(0, bombY - radius);
-        var minX = Mathf.Max(0, bombX - radius);
-        var maxY = Mathf.Min(matchedTiles.Count, bombY + radius);
-        var maxX = Mathf.Min(matchedTiles[bombY].Count, bombX + radius);
-        
-        for (int y = minY; y < maxY; y++)
-        {
-            for (int x = minX; x < maxX; x++)
+            for (int x = 0; x < newBoard[y].Count; x++)
             {
-                if ((Mathf.Pow(y - bombY, 2) + Mathf.Pow(x - bombX, 2)) > Mathf.Pow(radius, 2)) continue;
-                matchedTiles[y][x] = 1;
+                var tileType = matchedTiles[y][x];
+                if (tileType != 0)
+                {
+                    matchedPosition.Add(new Vector2Int(x, y));
+                    if (tileType < 0)
+                    {
+                        newBoard[y][x] = new Tile { id = _tileCount++, type = tileType };
+                        newSpecialTiles.Add(new AddedTileInfo
+                        {
+                            position = new Vector2Int(x, y),
+                            type = -newBoard[y][x].type
+                        });
+                    }
+                    else
+                    {
+                        newBoard[y][x] = new Tile { id = -1, type = -1 };
+                    }
+                }
             }
         }
+        return matchedPosition;
     }
 
-    private static void DestroyColors(List<List<Tile>> newBoard, List<List<int>> matchedTiles, int matchedTileType)
+    private List<MovedTileInfo> DroppingTiles(List<List<Tile>> newBoard, List<Vector2Int> matchedPosition)
     {
-        int rows = newBoard.Count;
-        for (int y = 0; y < rows; y++)
+        Debug.Log("DroppingTiles");
+        Dictionary<int, MovedTileInfo> movedTiles = new Dictionary<int, MovedTileInfo>();
+        List<MovedTileInfo> movedTilesList = new List<MovedTileInfo>();
+
+        for (int i = 0; i < matchedPosition.Count; i++)
         {
-            int columns = newBoard[y].Count;
-            for (int x = 0; x < columns; x++)
+            int x = matchedPosition[i].x;
+            int y = matchedPosition[i].y;
+
+            if (newBoard[y][x].type != -1) continue;
+
+            if (y > 0)
             {
-                if (matchedTileType == newBoard[y][x].type)
-                    matchedTiles[y][x] = 1;
+                for (int j = y; j > 0; j--)
+                {
+                    Tile movedTile = newBoard[j - 1][x];
+                    newBoard[j][x] = movedTile;
+                    if (movedTile.type != -1)
+                    {
+                        if (movedTiles.ContainsKey(movedTile.id))
+                        {
+                            movedTiles[movedTile.id].to = new Vector2Int(x, j);
+                        }
+                        else
+                        {
+                            MovedTileInfo movedTileInfo = new MovedTileInfo
+                            {
+                                from = new Vector2Int(x, j - 1),
+                                to = new Vector2Int(x, j)
+                            };
+                            movedTiles.Add(movedTile.id, movedTileInfo);
+                            movedTilesList.Add(movedTileInfo);
+                        }
+                    }
+                }
+
+                newBoard[0][x] = new Tile
+                {
+                    id = -1,
+                    type = -1
+                };
             }
         }
+        return movedTilesList;
     }
 
+    private List<AddedTileInfo> FillBoard(List<List<Tile>> newBoard)
+    {
+
+        Debug.Log("FillBoard");
+
+        List<AddedTileInfo> addedTiles = new List<AddedTileInfo>();
+
+        for (int y = newBoard.Count - 1; y > -1; y--)
+        {
+            for (int x = newBoard[y].Count - 1; x > -1; x--)
+            {
+                if (newBoard[y][x].type == -1)
+                {
+                    int tileType = Random.Range(0, _tilesTypes.Count);
+                    Tile tile = newBoard[y][x];
+                    tile.id = _tileCount++;
+                    tile.type = _tilesTypes[tileType];
+                    addedTiles.Add(new AddedTileInfo
+                    {
+                        position = new Vector2Int(x, y),
+                        type = tile.type
+                    });
+                }
+                else if (newBoard[y][x].type < -1)
+                {
+                    newBoard[y][x].type = -newBoard[y][x].type;
+                    Debug.Log("newBoard[y][x].type " + newBoard[y][x].type);
+                }
+            }
+        }
+        return addedTiles;
+    }
+
+
+
+   
     private List<List<int>> CreateMatchedTiles(List<List<Tile>> newBoard)
     {
         Debug.Log("CreateMatchedTiles");
@@ -190,22 +226,6 @@ public class GameController
             }
         }
         return matchedTiles;
-    }
-
-    private static void CleanLine(int y, List<List<int>> matchedTiles)
-    {
-        for (int i = 0; i < matchedTiles[y].Count; i++)
-        { 
-            matchedTiles[y][i] = 1;
-        }
-    }
-
-    private static void CleanColunm(int x, List<List<int>> matchedTiles)
-    {
-        for (int i = 0; i < matchedTiles[x].Count; i++)
-        {
-            matchedTiles[i][x] = 1;
-        }
     }
 
     private static bool FindMatches(List<List<Tile>> newBoard, List<List<int>> matchedTiles)
@@ -459,117 +479,6 @@ public class GameController
         }
     }
 
-    private List<Vector2Int> CleanMatchedTiles(List<List<Tile>> newBoard, List<List<int>> matchedTiles, List<AddedTileInfo> newSpecialTiles)
-    {
-        Debug.Log("CleanMatchedTiles");
-
-        List<Vector2Int> matchedPosition = new List<Vector2Int>();
-
-        for (int y = 0; y < newBoard.Count; y++)
-        {
-            for (int x = 0; x < newBoard[y].Count; x++)
-            {
-                var tileType = matchedTiles[y][x];
-                if (tileType != 0)
-                {
-                    matchedPosition.Add(new Vector2Int(x, y));
-                    if (tileType < 0)
-                    {
-                        newBoard[y][x] = new Tile { id = _tileCount++, type = tileType };
-                        newSpecialTiles.Add(new AddedTileInfo
-                        {
-                            position = new Vector2Int(x, y),
-                            type = -newBoard[y][x].type
-                        });
-                    }
-                    else
-                    {
-                        newBoard[y][x] = new Tile { id = -1, type = -1 };
-                    }
-                }
-            }
-        }
-        return matchedPosition;
-    }
-
-    private List<MovedTileInfo> DroppingTiles(List<List<Tile>> newBoard, List<Vector2Int> matchedPosition)
-    {
-        Debug.Log("DroppingTiles");
-        Dictionary<int, MovedTileInfo> movedTiles = new Dictionary<int, MovedTileInfo>();
-        List<MovedTileInfo> movedTilesList = new List<MovedTileInfo>();
-
-        for (int i = 0; i < matchedPosition.Count; i++)
-        {
-            int x = matchedPosition[i].x;
-            int y = matchedPosition[i].y;
-
-            if (newBoard[y][x].type != -1) continue;
-
-            if (y > 0)
-            {
-                for (int j = y; j > 0; j--)
-                {
-                    Tile movedTile = newBoard[j - 1][x];
-                    newBoard[j][x] = movedTile;
-                    if (movedTile.type != -1)
-                    {
-                        if (movedTiles.ContainsKey(movedTile.id))
-                        {
-                            movedTiles[movedTile.id].to = new Vector2Int(x, j);
-                        }
-                        else
-                        {
-                            MovedTileInfo movedTileInfo = new MovedTileInfo
-                            {
-                                from = new Vector2Int(x, j - 1),
-                                to = new Vector2Int(x, j)
-                            };
-                            movedTiles.Add(movedTile.id, movedTileInfo);
-                            movedTilesList.Add(movedTileInfo);
-                        }
-                    }
-                }
-
-                newBoard[0][x] = new Tile
-                {
-                    id = -1,
-                    type = -1
-                };
-            }
-        }
-        return movedTilesList;
-    }
-
-    private List<AddedTileInfo> FillBoard(List<List<Tile>> newBoard)
-    {
-        Debug.Log("FillBoard");
-
-        List<AddedTileInfo> addedTiles = new List<AddedTileInfo>();
-        
-        for (int y = newBoard.Count - 1; y > -1; y--)
-        {
-            for (int x = newBoard[y].Count - 1; x > -1; x--)
-            {
-                if (newBoard[y][x].type == -1)
-                {
-                    int tileType = Random.Range(0, _tilesTypes.Count);
-                    Tile tile = newBoard[y][x];
-                    tile.id = _tileCount++;
-                    tile.type = _tilesTypes[tileType];
-                    addedTiles.Add(new AddedTileInfo
-                    {
-                        position = new Vector2Int(x, y),
-                        type = tile.type
-                    });
-                }
-                else if (newBoard[y][x].type < -1)
-                {
-                    newBoard[y][x].type = -newBoard[y][x].type;
-                    Debug.Log("newBoard[y][x].type " + newBoard[y][x].type);
-                }
-            }
-        }
-        return addedTiles;
-    }
+   
 
 }

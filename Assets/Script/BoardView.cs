@@ -92,15 +92,7 @@ public class BoardView : MonoBehaviour
 
     public Tween MoveTiles(List<MovedTileInfo> movedTiles)
     {
-        TileView[][] tiles = new TileView[_tiles.Length][];
-        for (int y = 0; y < _tiles.Length; y++)
-        {
-            tiles[y] = new TileView[_tiles[y].Length];
-            for (int x = 0; x < _tiles[y].Length; x++)
-            {
-                tiles[y][x] = _tiles[y][x];
-            }
-        }
+        TileView[][] tiles = CreateTileBoard();
 
         Sequence sequence = DOTween.Sequence();
         for (int i = 0; i < movedTiles.Count; i++)
@@ -145,5 +137,19 @@ public class BoardView : MonoBehaviour
     private void OnTileSpotClick(int x, int y)
     {
         onTileClick(x, y);
+    }
+
+    private TileView[][] CreateTileBoard()
+    {
+        TileView[][] tiles = new TileView[_tiles.Length][];
+        for (int y = 0; y < _tiles.Length; y++)
+        {
+            tiles[y] = new TileView[_tiles[y].Length];
+            for (int x = 0; x < _tiles[y].Length; x++)
+            {
+                tiles[y][x] = _tiles[y][x];
+            }
+        }
+        return tiles;
     }
 }

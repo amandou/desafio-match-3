@@ -58,7 +58,9 @@ public class GameHandler : MonoBehaviour
                 onPlaySound?.Invoke(swapSound);
                 boardView.SwapTiles(selectedX, selectedY, x, y).onComplete += () =>
                 {
-                    bool isValid = gameController.IsValidMovement(selectedX, selectedY, x, y);
+                    Vector2Int from = new Vector2Int(selectedX, selectedY);
+                    Vector2Int to = new Vector2Int(x, y);
+                    bool isValid = gameController.IsValidMovement(from, to);
                    
                     if (!isValid)
                     {
