@@ -76,7 +76,6 @@ public class BoardView : MonoBehaviour
         TileView SwapedTile = _tiles[fromY][fromX];
         _tiles[fromY][fromX] = _tiles[toY][toX];
         _tiles[toY][toX] = SwapedTile;
-
         return swapSequence;
     }
 
@@ -85,7 +84,7 @@ public class BoardView : MonoBehaviour
         for (int i = 0; i < matchedPosition.Count; i++)
         {
             Vector2Int position = matchedPosition[i];
-            Destroy(_tiles[position.y][position.x].gameObject);
+            _tiles[position.y][position.x].Destroy();
             _tiles[position.y][position.x] = null;
         }
         return DOVirtual.DelayedCall(0.2f, () => { });
@@ -93,15 +92,7 @@ public class BoardView : MonoBehaviour
 
     public Tween MoveTiles(List<MovedTileInfo> movedTiles)
     {
-        TileView[][] tiles = new TileView[_tiles.Length][];
-        for (int y = 0; y < _tiles.Length; y++)
-        {
-            tiles[y] = new TileView[_tiles[y].Length];
-            for (int x = 0; x < _tiles[y].Length; x++)
-            {
-                tiles[y][x] = _tiles[y][x];
-            }
-        }
+        TileView[][] tiles = CreateTileBoard();
 
         Sequence sequence = DOTween.Sequence();
         for (int i = 0; i < movedTiles.Count; i++)
@@ -146,5 +137,19 @@ public class BoardView : MonoBehaviour
     private void OnTileSpotClick(int x, int y)
     {
         onTileClick(x, y);
+    }
+
+    private TileView[][] CreateTileBoard()
+    {
+        TileView[][] tiles = new TileView[_tiles.Length][];
+        for (int y = 0; y < _tiles.Length; y++)
+        {
+            tiles[y] = new TileView[_tiles[y].Length];
+            for (int x = 0; x < _tiles[y].Length; x++)
+            {
+                tiles[y][x] = _tiles[y][x];
+            }
+        }
+        return tiles;
     }
 }
